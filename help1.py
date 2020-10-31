@@ -14,5 +14,5 @@ for letter in word:
         word.replace(letter, letter+'a')
         temp_list.append(letter)
 
-print(temp_list)
+print(''.join(temp_list))
 print(word)
