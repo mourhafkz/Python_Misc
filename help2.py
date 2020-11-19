@@ -1,3 +1,56 @@
+
+def validate_ID(employeeID):
+    if employeeID:
+        if len(employeeID) <= 7 and employeeID.isdigit():
+            return True
+        else:
+            return False
+
+
+# Validate Employee Name
+def validate_name(employeeName):
+    if employeeName:
+        employeeNameExcludedCharachters = ['!', '"', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '=',
+                                           '+', ',', '<', '>', '/', '?', ';', ':', '[', ']', '{', '}', '\\']
+    for letter in employeeName:
+        if letter in employeeNameExcludedCharachters:
+            return False
+    return True
+
+
+# Validate Employee Email
+def validate_email(employeeEmail):
+    if employeeEmail:
+        employeeEmailExcludedCharachters = ['!', '"', '#', '$', '%', '^', '&', '*', '(', ')', '=', '+',
+                                            ',', '<', '>', '/', '?', ';', ':', '[', ']', '{', '}', '\\']
+    for letter in employeeEmail:
+        if letter in employeeEmailExcludedCharachters:
+            return False
+    return True
+
+
+# Validate Employee Address
+def validate_address(employeeAddress):
+    if employeeAddress:
+        employeeAddressExcludedCharachters = ['!', '"', "'", '@', '$', '%', '^', '&', '*', '_', '=', '+',
+                                              '<', '>', '/', '?', ';', ':', '[', ']', '{', '}']
+    for letter in employeeAddress:
+        if letter in employeeAddressExcludedCharachters:
+            return False
+    return True
+
+
+# Print Dictionary Elements
+
+def print_dictionary(list):
+    #remmeber to fix this
+    # line = "\n"
+    # for entry in list:
+    #     line = line + "Employee ID: " + entry['employeeID'] + " | Employee Name: " + entry['employeeName'] + " | Employee Email: " + entry['employeeEmail'] + " | Employee Address: " + entry['employeeAddress']
+    # line = line + "\n"
+    return list
+
+
 employeeList = []
 # Take 5 employees details from users
 customers = 1
