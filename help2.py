@@ -17,15 +17,15 @@ while customers < 6:
 
     if not validate_name(employeeName):  # or employeeName == "":
         employeeName = input("Enter Employee Name: ")
-        validate_name(employeeID)
+        validate_name(employeeName)
 
     if not validate_email(employeeEmail):  # or employeeEmail == "":
         employeeEmail = input("Enter Employee Email: ")
-        validate_email(employeeID)
+        validate_email(employeeEmail)
 
     if not validate_address(employeeAddress):  # or employeeAddress == "":
         employeeAddress = input("Enter Employee address: ")
-        validate_address(employeeID)
+        validate_address(employeeAddress)
 
     employeeList.append({'employeeID': employeeID,
                          'employeeName': employeeName,
