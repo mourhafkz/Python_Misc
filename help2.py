@@ -11,19 +11,19 @@ while customers < 6:
         break
     print(f'Enter details for customer number {customers} ')
     print(f'______________________________________________')
-    if not validate_ID(employeeID):  # or employeeID == 0:
+    if not validate_ID(employeeID) or employeeID == 0:
         employeeID = input("Enter Employee ID: ")
         validate_ID(employeeID)
 
-    if not validate_name(employeeName):  # or employeeName == "":
+    if not validate_name(employeeName) or employeeName == "":
         employeeName = input("Enter Employee Name: ")
         validate_name(employeeName)
 
-    if not validate_email(employeeEmail):  # or employeeEmail == "":
+    if not validate_email(employeeEmail) or employeeEmail == "":
         employeeEmail = input("Enter Employee Email: ")
         validate_email(employeeEmail)
 
-    if not validate_address(employeeAddress):  # or employeeAddress == "":
+    if not validate_address(employeeAddress) or employeeAddress == "":
         employeeAddress = input("Enter Employee address: ")
         validate_address(employeeAddress)
 
