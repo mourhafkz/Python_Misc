@@ -6,7 +6,7 @@ from collections import defaultdict
 import itertools
 
 """
-Loading the text file and preprocess the data
+Loading the text file and preprocessing the data
 """
 with open("web_data.txt", 'r', encoding="utf8") as f:
     user_input = f.read()
