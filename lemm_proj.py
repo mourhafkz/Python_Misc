@@ -28,6 +28,6 @@ print(lemmatized)
 
 """
 Ways to improve this:
-1- handcraft a lemmas dictionary similar to the yesterday's link or wordnet
+1- handcraft a lemmas dictionary similar to yesterday's link or wordnet
 2- maybe sort and binary search to minimize search iterations
 """
