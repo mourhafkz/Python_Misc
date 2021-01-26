@@ -23,6 +23,7 @@ tweet_input = "I rllllly aint home"
 alpha_only = [t for t in word_tokenize(tweet_input.lower()) if t.isalpha()]
 lemmatized = [TweetLemmatizer(i) for i in alpha_only]
 print(lemmatized)
+# output : ['i', 'really', "ain't", 'home']
 
 """
 Ways to improve this:
