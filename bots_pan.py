@@ -5,6 +5,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 from sklearn import metrics, naive_bayes
 from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 """
 expect training_data to be in /data/en/
@@ -17,12 +18,11 @@ Loading the data   --- these functions are taken from ashraf2019
 def iter_docs(author):
     author_attr = author.attrib
     doc_dict = author_attr.copy()
-    #    print(doc_dict)
     doc_dict['text'] = [' '.join([doc.text for doc in author.iter('document')])]
     return doc_dict
 
 
-def create_data_frame(input_folder):
+def create_test_data_frame(input_folder):
     os.chdir(input_folder)
     all_xml_files = glob.glob("*.xml")
     truth_data = pd.read_csv('truth.txt', sep=':::', names=['author_id', 'author', 'gender'], engine="python")
@@ -39,80 +39,69 @@ def create_data_frame(input_folder):
     return data
 
 
+
+def create_training_data_frame(input_folder, taining_div, testing_div):
+    os.chdir(input_folder)
+    all_xml_files = glob.glob("*.xml")
+    train_truth_div_data = pd.read_csv(taining_div, sep=':::', names=['author_id', 'author', 'gender'], engine="python")
+    test_truth_div_data = pd.read_csv(testing_div, sep=':::', names=['author_id', 'author', 'gender'], engine="python")
+    temp_list_of_DataFrames = []
+    text_Data = pd.DataFrame()
+    for file in all_xml_files:
+        etree = ET.parse(file)  # create an ElementTree object
+        doc_df = pd.DataFrame(iter_docs(etree.getroot()))
+        doc_df['author_id'] = file[:-4]
+        temp_list_of_DataFrames.append(doc_df)
+    text_Data = pd.concat(temp_list_of_DataFrames, axis=0)
+    training_data = text_Data.merge(train_truth_div_data, on='author_id')
+    testing_data = text_Data.merge(test_truth_div_data, on='author_id')
+    return training_data, testing_data
+
+
 # loading training data
-training_data = create_data_frame('data/en/')
-X, y = training_data['text'], training_data['author']
-# loading testing data
-testing_data = create_data_frame('../../data/en_test/')
-test_X, test_y = testing_data['text'], testing_data['author']
+training_div_data, testing_div_data = create_training_data_frame('data/en/', 'truth-train.txt', 'truth-dev.txt')
+print("Training Data size", len(training_div_data))
+print("Testing Data size", len(testing_div_data))
 
 
 """
 Preprocessing training data
 """
-training_corpus = []
-for i in range(0, len(X)):  # len(X)
-    tweet = re.sub(r'\W', ' ', str(X[i]))  # remove non-w chars
-    # tweet = X[i].lower()
-    tweet = tweet.lower()
-    tweet = re.sub(r'\s+[a-z]\s+', ' ', tweet)  # remove single characters like i and a
-    tweet = re.sub(r'^[a-z]\s+', ' ', tweet)  # remove single characters at the beginning like i and a
-    tweet = re.sub(r'\s+', ' ', tweet)  # remove the extra spaces created
-    training_corpus.append(tweet)
 
-#changing human to 1 and bot to 0
-test_human_bot_y = []
-for j in range(0, len(y)):
-    if y[j] == "human":
-        clas = 1
-    else:
-        clas = 0
-    test_human_bot_y.append(clas)
-y = test_human_bot_y
-
-"""
-Preprocessing testing data
-"""
-testing_corpus = []
-for i in range(0, len(test_X)):  # len(X)
-    tweet = re.sub(r'\W', ' ', str(test_X[i]))  # remove non-w chars
-    tweet = tweet.lower()
-    tweet = re.sub(r'\s+[a-z]\s+', ' ', tweet)  # remove single characters like i and a
-    tweet = re.sub(r'^[a-z]\s+', ' ', tweet)  # remove single characters at the beginning like i and a
-    tweet = re.sub(r'\s+', ' ', tweet)  # remove the extra spaces created
-    testing_corpus.append(tweet)
+def preprocess(data):
+    corpus = []
+    for i in range(0, len(data)):  # len(X)
+        tweet = re.sub(r'\W', ' ', str(data[i]))  # remove non-w chars
+        # tweet = X[i].lower()
+        tweet = tweet.lower()
+        tweet = re.sub(r'\s+[a-z]\s+', ' ', tweet)  # remove single characters like i and a
+        tweet = re.sub(r'^[a-z]\s+', ' ', tweet)  # remove single characters at the beginning like i and a
+        tweet = re.sub(r'\s+', ' ', tweet)  # remove our extra spaces
+        corpus.append(tweet)
+    return corpus
 
 
-#changing human to 1 and bot to 0
-training_human_bot_y = []
-for j in range(0, len(test_y)):
-    if test_y[j] == "human":
-        human = 1
-    else:
-        human = 0
-    training_human_bot_y.append(human)
-new_y = training_human_bot_y
+def set_labels(data):
+    labels = []
+    for j in range(0, len(data)):
+        if data[j] == "human":
+            clas = 1
+        else:
+            clas = 0
+        labels.append(clas)
+    return labels
 
 
-"""
-TFIDF vectorizer
-"""
+training_div_corpus = preprocess(training_div_data['text'])
+training_div_labels = set_labels(training_div_data['author'])
 
-from sklearn.feature_extraction.text import TfidfVectorizer
+testing_div_corpus = preprocess(testing_div_data['text'])
+testing_div_labels = set_labels(testing_div_data['author'])
+
 
 vectorizer = TfidfVectorizer(max_features=2000, min_df=3, max_df=0.6, stop_words=stopwords.words('english'))
-X = vectorizer.fit_transform(training_corpus).toarray()
-
-
-"""
-splitting the training data to get the accuracy
-"""
-from sklearn.model_selection import train_test_split
-td_tweet_train, td_tweet_test, td_author_train, td_author_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-"""
---------------------Machine Learning-----------------------------------
-"""
+vectorized_training_div_tweets = vectorizer.fit_transform(training_div_corpus).toarray()
+vectorized_testing_div_tweets = vectorizer.transform(testing_div_corpus).toarray()
 
 """
 Logistic Regression on tfidf
@@ -120,35 +109,48 @@ Logistic Regression on tfidf
 from sklearn.linear_model import LogisticRegression
 
 LR_classifier = LogisticRegression()
-LR_classifier.fit(td_tweet_train, td_author_train)
-label_pred = LR_classifier.predict(td_tweet_test)
-print("Logistic Regression accuracy on training_data:", metrics.accuracy_score(label_pred, td_author_test))
-
-
-test_tweets = vectorizer.transform(testing_corpus).toarray()
-label_pred_2 = LR_classifier.predict(test_tweets)
-print("Logistic Regression accuracy on test_data:", metrics.accuracy_score(label_pred_2, new_y))
-
-
-"""
-Naive Bayes on tfidf
-"""
-
+LR_classifier.fit(vectorized_training_div_tweets, training_div_labels)
+label_pred1 = LR_classifier.predict(vectorized_testing_div_tweets)
+print("Logistic Regression accuracy on training_data:", metrics.accuracy_score(label_pred1, testing_div_labels))
 
 NB_classifier = naive_bayes.MultinomialNB()
-NB_classifier.fit(td_tweet_train, td_author_train)
-label_pred = NB_classifier.predict(td_tweet_test)
-print("Naive Bayes accuracy on training_data:", metrics.accuracy_score(label_pred, td_author_test))
+NB_classifier.fit(vectorized_training_div_tweets, training_div_labels)
+label_pred2 = NB_classifier.predict(vectorized_testing_div_tweets)
+print("Naive Bayes accuracy on training_data:", metrics.accuracy_score(label_pred2, testing_div_labels))
 
 
-test_tweets = vectorizer.transform(testing_corpus).toarray()
-label_pred_2 = NB_classifier.predict(test_tweets)
-print("Naive Bayes accuracy on test_data:", metrics.accuracy_score(label_pred_2, new_y))
 
 """
-output:
-Logistic Regression accuracy on training_data: 0.9648058252427184
-Logistic Regression accuracy on test_data: 0.9068181818181819
-Naive Bayes accuracy on training_data: 0.8907766990291263
-Naive Bayes accuracy on test_data: 0.825
+TEST on separate data
+"""
+
+new_test_data = create_test_data_frame('../../data/en_test/')
+test_X, test_y = new_test_data['text'], new_test_data['author']
+print("New Testing Data size", len(new_test_data))
+
+
+new_test_corpus = preprocess(test_X)
+new_testing_labels = set_labels(test_y)
+
+test_tweets = vectorizer.transform(new_test_corpus).toarray()
+label_predict = LR_classifier.predict(test_tweets)
+print("Logistic Regression accuracy on new_test_data:", metrics.accuracy_score(label_predict, new_testing_labels))
+
+test_tweets = vectorizer.transform(new_test_corpus).toarray()
+label_pred_2 = NB_classifier.predict(test_tweets)
+print("Naive Bayes accuracy on new_test_data:", metrics.accuracy_score(label_pred_2, new_testing_labels))
+
+
+
+"""
+Output on my machine:
+------------------------------------------------------------------
+Training Data size 2880
+Testing Data size 1240
+Logistic Regression accuracy on training_data: 0.9016129032258065
+Naive Bayes accuracy on training_data: 0.7741935483870968
+New Testing Data size 2640
+Logistic Regression accuracy on new_test_data: 0.9030303030303031
+Naive Bayes accuracy on new_test_data: 0.8223484848484849
+-------------------------------------------------------------------
 """
