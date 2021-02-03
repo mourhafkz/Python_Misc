@@ -1,14 +1,9 @@
 import glob
 import os
-import re
 import pandas as pd
 import xml.etree.ElementTree as ET
-from nltk.corpus import stopwords
-from sklearn import metrics, naive_bayes
-from sklearn.feature_extraction.text import TfidfVectorizer
 import ktrain
-import numpy as np
-import tensorflow as tf
+
 from ktrain import text
 
 """
@@ -24,24 +19,6 @@ def iter_docs(author):
     doc_dict = author_attr.copy()
     doc_dict['text'] = [' '.join([doc.text for doc in author.iter('document')])]
     return doc_dict
-
-
-def create_test_data_frame(input_folder):
-    os.chdir(input_folder)
-    all_xml_files = glob.glob("*.xml")
-    truth_data = pd.read_csv('truth.txt', sep=':::', names=['author_id', 'author', 'gender'], engine="python")
-    temp_list_of_DataFrames = []
-    text_Data = pd.DataFrame()
-    for file in all_xml_files:
-        etree = ET.parse(file)  # create an ElementTree object
-        doc_df = pd.DataFrame(iter_docs(etree.getroot()))
-        doc_df['author_id'] = file[:-4]
-        temp_list_of_DataFrames.append(doc_df)
-    text_Data = pd.concat(temp_list_of_DataFrames, axis=0)
-
-    data = text_Data.merge(truth_data, on='author_id')
-    return data
-
 
 
 def create_training_data_frame(input_folder, taining_div, testing_div):
